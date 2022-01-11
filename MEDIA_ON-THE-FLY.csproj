@@ -67,6 +67,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="formHome.resx">
       <DependentUpon>formHome.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="formPlayer.resx">
       <DependentUpon>formPlayer.cs</DependentUpon>

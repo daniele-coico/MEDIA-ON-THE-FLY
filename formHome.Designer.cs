@@ -133,9 +133,9 @@ namespace MEDIA_ON_THE_FLY
             this.lblCrediti.Enabled = false;
             this.lblCrediti.Location = new System.Drawing.Point(16, 519);
             this.lblCrediti.Name = "lblCrediti";
-            this.lblCrediti.Size = new System.Drawing.Size(260, 16);
+            this.lblCrediti.Size = new System.Drawing.Size(178, 16);
             this.lblCrediti.TabIndex = 7;
-            this.lblCrediti.Text = "Sviluppato da Coico Daniele per OMP s.r.l.";
+            this.lblCrediti.Text = "Sviluppato da Coico Daniele";
             // 
             // lblAvanzate
             // 
