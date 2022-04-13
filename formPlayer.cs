@@ -8,35 +8,36 @@ namespace MEDIA_ON_THE_FLY
 {
     public partial class formPlayer : Form
     {
-        private readonly int monitor;
-        private readonly int volume;
-        
-        private readonly MOTF.PLAY_MODE playMode;
+        private readonly int _monitor;
+        private readonly int _volume;
+
+        private readonly MOTF.PLAY_MODE _playMode;
+        private readonly DriveType _lastDriveType;
 
         private readonly FileInfo remoteFile;
         private readonly string remoteFilePath;
         private readonly string remoteFileDirectory;
         private readonly string localfilePath = Application.StartupPath + @"/tmp/loaded_video.mp4";
-        
-        public formPlayer(string _filePath, int monitor = 1, int _playMode = (int)MOTF.PLAY_MODE.FILE, int volume = 0)
+
+        public formPlayer(string filePath, int monitor = 1, int playMode = (int)MOTF.PLAY_MODE.FILE, int volume = 0, string driveType = "Fixed")
         {
             InitializeComponent();
             MOTF.Log("Inizializzo i componenti");
 
             // Non posso passare per parametro un ENUM
             // quindi faccio il cast dell'intero passato.
-            playMode = (MOTF.PLAY_MODE)_playMode;
+            _playMode = (MOTF.PLAY_MODE)playMode;
 
-            switch (playMode)
-            { 
+            switch (_playMode)
+            {
                 case MOTF.PLAY_MODE.FILE:
-                    remoteFile = new FileInfo(_filePath);
+                    remoteFile = new FileInfo(filePath);
                     remoteFilePath = remoteFile.FullName;
                     remoteFileDirectory = remoteFile.DirectoryName; // Imposto la cartella da controllare
                     break;
                 case MOTF.PLAY_MODE.PLAYLIST:
-                    remoteFilePath = _filePath;
-                    remoteFileDirectory = _filePath;
+                    remoteFilePath = filePath;
+                    remoteFileDirectory = filePath;
                     break;
                 case MOTF.PLAY_MODE.FOLDER:
                     break;
@@ -44,14 +45,17 @@ namespace MEDIA_ON_THE_FLY
                     return;
             }
 
-            MOTF.Log($"Ho impostato la modalità di riproduzione {playMode}");
+            // Ultimo DriveType dell'ultimo dispositivo utilizzato
+            _lastDriveType = SetDriveType(driveType);
+
+            MOTF.Log($"Ho impostato la modalità di riproduzione: {_playMode}");
 
             // Imposto la posizione d'avvio del form
-            // Il counter del monitor parte da 0 quindi tolgo 1 dalla variabile passata
+            // Il counter del _monitor parte da 0 quindi tolgo 1 dalla variabile passata
             Bounds = Screen.AllScreens[monitor].Bounds;
-            this.monitor = monitor;
+            _monitor = monitor - 1;
 
-            this.volume = volume;
+            _volume = volume;
 
             // Imposto l'icona della finestra
             Icon = Properties.Resources.img_641;
@@ -67,13 +71,13 @@ namespace MEDIA_ON_THE_FLY
 
             // Se non viene passato alcun parametro imposto
             // il file locale come video da riprodurre.
-            if (filePath == null && playMode == MOTF.PLAY_MODE.FILE)
+            if (filePath == null && _playMode == MOTF.PLAY_MODE.FILE)
                 filePath = localfilePath;
 
-            // Se la modalità di riproduzione è FOLDER allora credo una playlist
+            // Se la modalità di riproduzione è FOLDER allora creo una playlist
             // e inserisco tutti i video presenti nella cartella.
             // TODO: filtrare con le estensioni valide.
-            if (playMode == MOTF.PLAY_MODE.FOLDER)
+            if (_playMode == MOTF.PLAY_MODE.FOLDER)
             {
                 wmpMedia.currentPlaylist = wmpMedia.newPlaylist("temp", "");
                 foreach (string videoPath in Directory.GetFiles(remoteFilePath))
@@ -88,7 +92,7 @@ namespace MEDIA_ON_THE_FLY
 
             WindowState = FormWindowState.Maximized; // Massimizzo lo stato della finestra
 
-            wmpMedia.settings.volume = volume;  // Imposto il volume
+            wmpMedia.settings.volume = _volume;  // Imposto il _volume
             wmpMedia.Ctlenabled = false;        // Tolgo i controlli
             wmpMedia.settings.setMode("loop", true);    // Imposto il player per andare in loop
 
@@ -99,16 +103,66 @@ namespace MEDIA_ON_THE_FLY
             lblStatoVideo.Visible = false;
         }
 
+        private void EscKeyPress()
+        {
+            MOTF.Log("Esco dallo schermo intero");
+
+            wmpMedia.fullScreen = false;
+            Size = new System.Drawing.Size(800, 600);   // Imposto una size stnadard
+            WindowState = FormWindowState.Normal;       // Metto la finestra a normal
+            FormBorderStyle = FormBorderStyle.Sizable;    // Imposto il BorderStyle
+
+            Location = new Point(Location.X, Screen.AllScreens[_monitor].WorkingArea.Y); // Correggo la location
+        }
+
+        private DriveType SetDriveType(string driveTypeString)
+        {
+            switch (driveTypeString)
+            {
+                case "Unknown":
+                    return DriveType.Unknown;
+                case "NoRootDirectory":
+                    return DriveType.NoRootDirectory;
+                case "Removable":
+                    return DriveType.Removable;
+                case "Fixed":
+                    return DriveType.Fixed;
+                case "Network":
+                    return DriveType.Network;
+                case "CDRom":
+                    return DriveType.CDRom;
+                case "Ram":
+                    return DriveType.Ram;
+                default:
+                    return DriveType.Unknown;
+            }
+        }
+
         private void formPlayer_Load(object sender, EventArgs e)
         {
+            int fileCheckStatus = 1;
             MOTF.Log("Player caricato");
 
             // Controllo nuovamente l'esistenza del file/cartella
-            switch (playMode)
+            switch (_playMode)
             {
                 case MOTF.PLAY_MODE.FILE:
+                    // Se il file non esiste inizio a fare più controlli
                     if (!File.Exists(remoteFilePath))
+                    {
+                        formFileCheck formFileCheck = new formFileCheck(remoteFilePath, _lastDriveType);
+                        formFileCheck.Show();
+                        Application.DoEvents(); // Per qualche motivo se non lasciamo questa istruzione il fileCheckStatus non viene aggiornato.
+                        fileCheckStatus = formFileCheck.CheckStatus;
+                    }
+
+                    if (fileCheckStatus == 0)
+                    {
+                        MOTF.Log("File non trovato");
+                        MessageBox.Show("Il file da riprodurre non esiste. Controlla la directory inserita e se il dispositivo dove si trova il file è collegato", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         Close();
+                        return;
+                    }
 
                     MOTF.Log("Copio il video in locale e avvio la riproduzione");
 
@@ -223,14 +277,7 @@ namespace MEDIA_ON_THE_FLY
         {
             // Se premo ESC o CANC esco dallo schermo intero
             if (e.nKeyCode == (short)Keys.Escape || e.nKeyCode == (short)Keys.Delete)
-            {
-                MOTF.Log("Esco dallo schermo intero");
-                Size = new Size(800, 600);  // Imposto una size stnadard
-                WindowState = FormWindowState.Normal;       // Metto la finestra a normal
-                FormBorderStyle = FormBorderStyle.Sizable;  // Imposto il BorderStyle
-
-                Location = new Point(Location.X, Screen.AllScreens[monitor].WorkingArea.Y); // Correggo la location
-            }
+                EscKeyPress();
         }
 
         private void formPlayer_SizeChanged(object sender, EventArgs e)
@@ -245,6 +292,8 @@ namespace MEDIA_ON_THE_FLY
                 MaximizedBounds = rect;
 
                 WindowState = FormWindowState.Maximized;
+
+                wmpMedia.fullScreen = true;
             }
         }
 
@@ -252,17 +301,15 @@ namespace MEDIA_ON_THE_FLY
         {
             // Se premo ESC o CANC esco dallo schermo intero
             if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Delete)
-            {
-                MOTF.Log("Esco dallo schermo intero");
-                Size = new System.Drawing.Size(800, 600);   // Imposto una size stnadard
-                WindowState = FormWindowState.Normal;       // Metto la finestra a normal
-                FormBorderStyle = FormBorderStyle.Sizable;    // Imposto il BorderStyle
-
-                Location = new Point(Location.X, Screen.AllScreens[monitor].WorkingArea.Y); // Correggo la location
-            }
+                EscKeyPress();
         }
 
         private void wmpMedia_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
+        {
+
+        }
+
+        private void lblStatoVideo_Click(object sender, EventArgs e)
         {
 
         }

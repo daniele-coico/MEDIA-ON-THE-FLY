@@ -14,6 +14,9 @@ namespace MEDIA_ON_THE_FLY
 
         private static string LOG_PATH = Application.StartupPath + "\\log.txt";    // Director nella quale salvare il file di log
 
+        /// <summary>
+        /// Questo enumeratore indica vari modi di come l'utente intende può riprodurre i video
+        /// </summary>
         public enum PLAY_MODE
         {
             FILE = 0,
@@ -93,6 +96,112 @@ namespace MEDIA_ON_THE_FLY
             if (CheckStartupItem())
                 // Remove the value from the registry so that the application doesn't start
                 rkApp.DeleteValue("MOTF", false);
+        }
+
+        /// <summary>
+        /// Questa classe esegue un'ulteriore controllo con il metodo Exists della classe File ma controlla anche su quale
+        /// dispositivo si può trovare il file.
+        /// </summary>
+        /// <param name="filePath">Path del file da riprodurre</param>
+        /// <param name="fileLocation">Tipo di dispositivo su cui si trova il file</param>
+        /// <returns>True se il file è stato trovato - False nel caso contrario</returns>
+        public static bool FileExist(string filePath, out DriveType fileLocation)
+        {
+            bool fileExist = false;
+
+            if (File.Exists(filePath) == false)
+            {
+                // Se anche questo controllo è falso vuol dire che il
+                // disco che stiamo controllando non è presente fisicamente
+                // nel sistema.
+                if (FileRootIsPhysicalDisk(filePath) == false)
+                    fileLocation = DriveType.Unknown;
+                else
+                    fileLocation = DriveType.Fixed;
+
+                fileExist = false;
+            }
+            else
+            {
+                fileLocation = GetFileDriveType(filePath);
+                fileExist = true;
+            }
+
+            return fileExist;
+        }
+
+        /// <summary>
+        /// Questo metodo viene richiamato per sapere in che tipo di dispositivo è salvato il file.
+        /// </summary>
+        /// <param name="path">Path del file da riprodurre</param>
+        /// <returns>Viene ritornato il tipo di dispositivo sulla quale è salvato il file.</returns>
+        public static DriveType GetFileDriveType(string path)
+        {
+            try
+            {
+                DriveInfo driveInfo = new DriveInfo(Directory.GetDirectoryRoot(path));
+                return driveInfo.DriveType;
+            }
+            // Se la root non è conforma verrà lanciata un'eccezione da gestire - probabilmente il file è in rete.
+            catch (ArgumentException)
+            {
+                Log("Il file da riprodurre non è su disco ma potrebbe esistere - ArgumentException");
+            }
+            // È anche possibile che il file non esista.
+            catch (FileNotFoundException)
+            {
+                Log("Il file non si trova - FileNotFoundException");
+            }
+
+            // Controllo la root della path manualmente.
+            if (FileRootIsPhysicalDisk(path))
+                return DriveType.Fixed;
+            else
+                return DriveType.Unknown;
+        }
+
+        /// <summary>
+        /// Il seguente metodo verifica i dischi logici presenti nel sistema e li distingue da quelli fisici.
+        /// Viene poi controllata la root del file passato con i dischi fisici per capire se il file si può trovare
+        /// in uno di questi dispositivi di massa.
+        /// </summary>
+        /// <param name="path">Path del file da riprodurre</param>
+        /// <returns>True se il file si trovava in un disco fisico - False in caso contrario</returns>
+        public static bool FileRootIsPhysicalDisk(string path)
+        {
+            bool IsFileOnDisk = false;
+            string pathParent = Directory.GetParent(path).FullName;
+
+            string[] logicalDisk = System.Environment.GetLogicalDrives();   // Dischi logici presenti nel sistema
+            List<string> physicalDisk = new List<string>();                 // Dischi fisici presenti nel sistema
+
+            string fileRoot = Path.GetPathRoot(pathParent);   // Root del file
+
+            // Verifico i singoli dischi logici.
+            // Se sono fisici li aggiungo alla lista.
+            foreach (string logicalDiskItem in logicalDisk)
+            {
+                DriveInfo driveInfo = new DriveInfo(logicalDiskItem);
+                DriveType driveType = driveInfo.DriveType;
+                Log($"Disco logico trovato: {logicalDiskItem}");
+
+                if (driveType != DriveType.Network && driveType != DriveType.Unknown && driveType != DriveType.NoRootDirectory)
+                {
+                    Log($"{logicalDiskItem} è anche un disco fisico");
+                    physicalDisk.Add(logicalDiskItem);
+                }
+            }
+
+            // Verifico la root con ogni disco fisico.
+            // Se c'è una corrispondenza allora il file potrebbe esistere su disco.
+            foreach (string root in physicalDisk)
+                if (root == fileRoot)
+                {
+                    Log("La root del file da riprodurre corrisponde ad uno dei dischi trovati");
+                    IsFileOnDisk = true;
+                }
+
+            return IsFileOnDisk;
         }
     }
 }

@@ -8,11 +8,12 @@ namespace MEDIA_ON_THE_FLY
     public partial class formHome : Form
     {
         // Variabili
-        private const string versione = "0.1";
+        private const string versione = "0.2";
         
         private string _filePath;           // Path del file da controllare
-        private MOTF.PLAY_MODE _playMode;   // Modalità con la quale l'utente riproduce il/i video
+        private MOTF.PLAY_MODE _playMode;   // Modalità con la quale l'utente riprodurrà i file
         private int _volume;                // Volume per il WMP impostato dalla trackbar
+        private string _driveType;          // Ultimo tipo di dispositivo utilizzato per salvare il file
 
         public formHome()
         {
@@ -78,12 +79,12 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
-        private void StartPlayer(int playMode = 0, int monitor = 1, string filePath = "", int volume = 0)
+        private void AutoStartPlayer(int playMode = 0, int monitor = 1, string filePath = "", int volume = 0, string driveType = "Fixed")
         {
             if (playMode == (int)MOTF.PLAY_MODE.FILE || playMode == (int)MOTF.PLAY_MODE.FOLDER)
                 if (string.IsNullOrEmpty(filePath))
                 {
-                    MessageBox.Show("Seleziona una cartella o un file da riprodurre", "Attenizone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Seleziona una cartella o un file da riprodurre", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
             // Faccio un'ulteriore controllo sul monitor
@@ -94,7 +95,7 @@ namespace MEDIA_ON_THE_FLY
             {
                 // Apro il form player
                 SaveSettings(monitor);  // Salvo le impostazioni
-                new formPlayer(filePath, monitor, playMode, volume).ShowDialog();
+                new formPlayer(filePath, monitor, playMode, volume, driveType).ShowDialog();
             }
         }
 
@@ -106,6 +107,8 @@ namespace MEDIA_ON_THE_FLY
             writeSettings.AddSetting("monitor", monitor);
             writeSettings.AddSetting("path", _filePath);
             writeSettings.AddSetting("volume", _volume);
+            writeSettings.AddSetting("driveType", MOTF.GetFileDriveType(_filePath).ToString());
+
             // copia sempre in locale etc. da fare
         }
 
@@ -126,12 +129,20 @@ namespace MEDIA_ON_THE_FLY
                 tboxLog.Text = MOTF.Log("Impostazione d'avvio trovata! Avvio il player con le ultime impostazioni");
                 cboxAvvio.Checked = true;
 
+                // Lettura impostazioni
                 ReadSettings readSettings = new ReadSettings(Application.StartupPath, "config");
-                int playMode = readSettings.ReadInt("play_mode");
+                _playMode = (MOTF.PLAY_MODE)readSettings.ReadInt("play_mode");
                 int monitor = readSettings.ReadInt("monitor");
-                string path = readSettings.ReadString("path");
-                int volume = readSettings.ReadInt("volume");
-                StartPlayer(playMode, monitor, path, volume);
+                _filePath = readSettings.ReadString("path");
+                _volume = readSettings.ReadInt("volume");
+                _driveType = readSettings.ReadString("driveType");
+
+                // Impostazione dei vari controlli utente
+                comboBox1.SelectedItem = $"{monitor}";
+                tboxPath.Text = _filePath;
+                tbarVolume.Value = _volume;
+
+                AutoStartPlayer((int)_playMode, monitor, _filePath, _volume, _driveType);
             }
 
             int numeroMonitor = 1; // Il numero minimo di monitor è 1 (?)

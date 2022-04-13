@@ -68,6 +68,7 @@ namespace MEDIA_ON_THE_FLY
             this.lblStatoVideo.TabIndex = 1;
             this.lblStatoVideo.Text = "Sto cambiando il video...";
             this.lblStatoVideo.Visible = false;
+            this.lblStatoVideo.Click += new System.EventHandler(this.lblStatoVideo_Click);
             // 
             // formPlayer
             // 
