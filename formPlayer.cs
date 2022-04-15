@@ -17,7 +17,7 @@ namespace MEDIA_ON_THE_FLY
         private readonly FileInfo remoteFile;
         private readonly string remoteFilePath;
         private readonly string remoteFileDirectory;
-        private readonly string localfilePath = Application.StartupPath + @"/tmp/loaded_video.mp4";
+        private readonly string localfilePath = MOTF.TMP_FOLDER + @"/loaded_video.mp4";
 
         public formPlayer(string filePath, int monitor = 1, int playMode = (int)MOTF.PLAY_MODE.FILE, int volume = 0, string driveType = "Fixed")
         {
@@ -110,7 +110,8 @@ namespace MEDIA_ON_THE_FLY
             wmpMedia.fullScreen = false;
             Size = new System.Drawing.Size(800, 600);   // Imposto una size stnadard
             WindowState = FormWindowState.Normal;       // Metto la finestra a normal
-            FormBorderStyle = FormBorderStyle.Sizable;    // Imposto il BorderStyle
+            FormBorderStyle = FormBorderStyle.Sizable;  // Imposto il BorderStyle
+
 
             Location = new Point(Location.X, Screen.AllScreens[_monitor].WorkingArea.Y); // Correggo la location
         }

@@ -9,8 +9,8 @@ namespace MEDIA_ON_THE_FLY
     public partial class formFileCheck : Form
     {
         public static int CheckStatus = 0;
-        private string _remoteFilePath;
-        private DriveType _lastDriveType;
+        private readonly string _remoteFilePath;
+        private readonly DriveType _lastDriveType;
 
         public formFileCheck(string filePath, DriveType driveType)
         {

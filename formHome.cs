@@ -8,12 +8,15 @@ namespace MEDIA_ON_THE_FLY
     public partial class formHome : Form
     {
         // Variabili
-        private const string versione = "0.2";
+        private const string versione = "0.2.1";
         
-        private string _filePath;           // Path del file da controllare
         private MOTF.PLAY_MODE _playMode;   // Modalità con la quale l'utente riprodurrà i file
-        private int _volume;                // Volume per il WMP impostato dalla trackbar
+        private string _filePath;           // Path del file da controllare
         private string _driveType;          // Ultimo tipo di dispositivo utilizzato per salvare il file
+        private int _volume;                // Volume per il WMP impostato dalla trackbar
+
+        // Directory utente in uso
+        private string _userSettingsPath = MOTF.SET_FOLDER + $"\\{Environment.MachineName}\\{Environment.UserName}";
 
         public formHome()
         {
@@ -36,8 +39,12 @@ namespace MEDIA_ON_THE_FLY
                 _filePath = fileDialog.FileName;
 
             // Creo la cartella tmp se non esiste
-            if (!System.IO.Directory.Exists(Application.StartupPath + @"\tmp"))
-                System.IO.Directory.CreateDirectory(Application.StartupPath + @"\tmp");
+            if (!System.IO.Directory.Exists(MOTF.TMP_FOLDER))
+                System.IO.Directory.CreateDirectory(MOTF.TMP_FOLDER);            
+            
+            // Creo la cartella settings se non esiste
+            if (!System.IO.Directory.Exists(_userSettingsPath))
+                System.IO.Directory.CreateDirectory(_userSettingsPath);
 
             // Imposto la path nella tbox
             tboxPath.Text = _filePath;
@@ -59,7 +66,7 @@ namespace MEDIA_ON_THE_FLY
             if (_playMode == MOTF.PLAY_MODE.FILE || _playMode == MOTF.PLAY_MODE.FOLDER)
                 if (string.IsNullOrEmpty(tboxPath.Text))
                 {
-                    MessageBox.Show("Seleziona una cartella o un file da riprodurre", "Attenizone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Seleziona una cartella o un file da riprodurre", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
             // In base all'item selezionato nella cbox
@@ -75,7 +82,9 @@ namespace MEDIA_ON_THE_FLY
                 // Apro il form player
                 MessageBox.Show("Per uscire dal Media Player premere ESC", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 SaveSettings(selectedMonitor);  // Salvo le impostazioni
+                Hide();
                 new formPlayer(_filePath, selectedMonitor, (int)_playMode, _volume).ShowDialog();
+                Show();
             }
         }
 
@@ -95,14 +104,16 @@ namespace MEDIA_ON_THE_FLY
             {
                 // Apro il form player
                 SaveSettings(monitor);  // Salvo le impostazioni
+                Hide();
                 new formPlayer(filePath, monitor, playMode, volume, driveType).ShowDialog();
+                Show();
             }
         }
 
         private void SaveSettings(int monitor = 0)
         {
             // Scrivo le impostazioni
-            WriteSettings writeSettings = new WriteSettings(Application.StartupPath, "config");
+            WriteSettings writeSettings = new WriteSettings(_userSettingsPath, "config");
             writeSettings.AddSetting("play_mode", (int)_playMode);
             writeSettings.AddSetting("monitor", monitor);
             writeSettings.AddSetting("path", _filePath);
@@ -114,12 +125,12 @@ namespace MEDIA_ON_THE_FLY
 
         private void formHome_Load(object sender, EventArgs e)
         {
-            if (File.Exists(Application.StartupPath + "\\motf.lock"))
+            if (File.Exists(MOTF.LOCK_PATH))
                 tboxLog.Text = MOTF.Log($"L'ultima volta MEDIA ON-THE-FLY non è stato chiuso correttamente");
             else
             { 
                 tboxLog.Text = MOTF.Log($"MEDIA ON-THE-FLY avviato! - versione {versione}");
-                File.WriteAllText(Application.StartupPath + "\\motf.lock", "");
+                File.WriteAllText(MOTF.LOCK_PATH, "");
             }
 
             // Controllo se il programma è impostato
@@ -130,7 +141,7 @@ namespace MEDIA_ON_THE_FLY
                 cboxAvvio.Checked = true;
 
                 // Lettura impostazioni
-                ReadSettings readSettings = new ReadSettings(Application.StartupPath, "config");
+                ReadSettings readSettings = new ReadSettings(_userSettingsPath, "config");
                 _playMode = (MOTF.PLAY_MODE)readSettings.ReadInt("play_mode");
                 int monitor = readSettings.ReadInt("monitor");
                 _filePath = readSettings.ReadString("path");
@@ -225,7 +236,7 @@ namespace MEDIA_ON_THE_FLY
 
         private void btnPlaylist_Click(object sender, EventArgs e)
         {
-
+            // TODO
         }
 
         private void tbarVolume_Scroll(object sender, EventArgs e)
@@ -235,7 +246,7 @@ namespace MEDIA_ON_THE_FLY
 
         private void formHome_FormClosed(object sender, FormClosedEventArgs e)
         {
-            File.Delete(Application.StartupPath + "\\motf.lock");
+            File.Delete(MOTF.LOCK_PATH);
             MOTF.Log("!! MOTF chiuso !!");
         }
     }

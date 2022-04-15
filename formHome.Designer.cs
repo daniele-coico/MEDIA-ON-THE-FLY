@@ -263,6 +263,7 @@ namespace MEDIA_ON_THE_FLY
             this.tboxLog.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.tboxLog.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.tboxLog.Enabled = false;
+            this.tboxLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tboxLog.Location = new System.Drawing.Point(0, 551);
             this.tboxLog.Name = "tboxLog";
             this.tboxLog.ReadOnly = true;
