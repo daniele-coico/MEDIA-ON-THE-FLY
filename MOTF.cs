@@ -79,7 +79,7 @@ namespace MEDIA_ON_THE_FLY
         /// <returns>Testo modificato da mostrare all'utente</returns>
         private static string ErrorLog(string text, Exception e = null)
         {
-            string ErrorLogFile = Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt";
+            string ErrorLogFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\MEDIA ON-THE-FLY\\error.txt";
 
             text += $"\n!!! Errore nella scrittura del file di log: {e.Message} !!!\n{e.StackTrace}\n";
 
