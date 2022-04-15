@@ -17,7 +17,7 @@ namespace MEDIA_ON_THE_FLY
         private readonly FileInfo remoteFile;
         private readonly string remoteFilePath;
         private readonly string remoteFileDirectory;
-        private readonly string localfilePath = MOTF.TMP_FOLDER + @"/loaded_video.mp4";
+        private readonly string localfilePath = MOTF.TEMP_FOLDER + @"\loaded_video.mp4";
 
         public formPlayer(string filePath, int monitor = 1, int playMode = (int)MOTF.PLAY_MODE.FILE, int volume = 0, string driveType = "Fixed")
         {

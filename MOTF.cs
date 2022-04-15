@@ -8,13 +8,17 @@ namespace MEDIA_ON_THE_FLY
 {
     internal class MOTF
     {
-        // Director nella quale salvare il file di log
-        private static readonly string LOG_PATH = Application.StartupPath + @"\log.txt";
-        public static readonly string LOCK_PATH = Application.StartupPath + @"\motf.lock";
+        // Sotto cartelle per nome PC e nome utente in uso
+        public static readonly string MACHINENAME_AND_USERNAME = $@"\{Environment.MachineName}\{Environment.UserName}";
 
         // Cartelle utili all'applicazione
-        public static readonly string TMP_FOLDER = Application.StartupPath + @"\tmp";
-        public static readonly string SET_FOLDER = Application.StartupPath + @"\settings";
+        public static readonly string MOTF_FOLDER = Application.StartupPath + @"\motf";
+        public static readonly string USER_FOLDER = MOTF_FOLDER + MACHINENAME_AND_USERNAME;
+        public static readonly string TEMP_FOLDER = USER_FOLDER + @"\tmp";
+
+        // Path file utili
+        private static readonly string LOG_PATH = USER_FOLDER + @"\log.txt";
+        public static readonly string LOCK_PATH = USER_FOLDER + @"\motf.lock";
 
         /// <summary>
         /// Questo enumeratore indica vari modi di come l'utente intende può riprodurre i video
@@ -55,7 +59,7 @@ namespace MEDIA_ON_THE_FLY
             return LogText;
         }
 
-        public static bool CheckSettingsFile() => File.Exists(SET_FOLDER + @"\config.set");
+        public static bool CheckSettingsFile() => File.Exists(USER_FOLDER + @"\config.set");
 
         /// <summary>
         /// Metodo per verificare l'esistenza di una chiave che consenta l'avvio automatico del programma.

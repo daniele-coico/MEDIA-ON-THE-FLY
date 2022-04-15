@@ -8,15 +8,12 @@ namespace MEDIA_ON_THE_FLY
     public partial class formHome : Form
     {
         // Variabili
-        private const string versione = "0.2.1";
+        private const string versione = "0.2.2";
         
         private MOTF.PLAY_MODE _playMode;   // Modalità con la quale l'utente riprodurrà i file
         private string _filePath;           // Path del file da controllare
         private string _driveType;          // Ultimo tipo di dispositivo utilizzato per salvare il file
         private int _volume;                // Volume per il WMP impostato dalla trackbar
-
-        // Directory utente in uso
-        private string _userSettingsPath = MOTF.SET_FOLDER + $"\\{Environment.MachineName}\\{Environment.UserName}";
 
         public formHome()
         {
@@ -37,15 +34,7 @@ namespace MEDIA_ON_THE_FLY
             // Se il DialogResult è OK allora imposto il filePath
             if (fileDialog.ShowDialog() == DialogResult.OK)
                 _filePath = fileDialog.FileName;
-
-            // Creo la cartella tmp se non esiste
-            if (!System.IO.Directory.Exists(MOTF.TMP_FOLDER))
-                System.IO.Directory.CreateDirectory(MOTF.TMP_FOLDER);            
             
-            // Creo la cartella settings se non esiste
-            if (!System.IO.Directory.Exists(_userSettingsPath))
-                System.IO.Directory.CreateDirectory(_userSettingsPath);
-
             // Imposto la path nella tbox
             tboxPath.Text = _filePath;
         }
@@ -113,7 +102,7 @@ namespace MEDIA_ON_THE_FLY
         private void SaveSettings(int monitor = 0)
         {
             // Scrivo le impostazioni
-            WriteSettings writeSettings = new WriteSettings(_userSettingsPath, "config");
+            WriteSettings writeSettings = new WriteSettings(MOTF.USER_FOLDER, "config");
             writeSettings.AddSetting("play_mode", (int)_playMode);
             writeSettings.AddSetting("monitor", monitor);
             writeSettings.AddSetting("path", _filePath);
@@ -141,7 +130,7 @@ namespace MEDIA_ON_THE_FLY
                 cboxAvvio.Checked = true;
 
                 // Lettura impostazioni
-                ReadSettings readSettings = new ReadSettings(_userSettingsPath, "config");
+                ReadSettings readSettings = new ReadSettings(MOTF.USER_FOLDER, "config");
                 _playMode = (MOTF.PLAY_MODE)readSettings.ReadInt("play_mode");
                 int monitor = readSettings.ReadInt("monitor");
                 _filePath = readSettings.ReadString("path");
