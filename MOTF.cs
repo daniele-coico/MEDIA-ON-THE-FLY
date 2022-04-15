@@ -45,18 +45,56 @@ namespace MEDIA_ON_THE_FLY
             if (orario == false)
                 LogText = $"{firstChar} {txt}";
 
+            // È possibile che il programma non possa scrivere all'interno del file di log.
+            // Questo può succedere quando il file di log si trova su un server e si perde la connessione
+            // con esso.
+            try
+            {
+                // Inserisco tutti i dati anche nel file
+                // Se non esiste lo creo
+                if (!File.Exists(LOG_PATH))
+                {
+                    StreamWriter streamWriter = File.CreateText(LOG_PATH);
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+                else
+                    File.AppendAllLines(LOG_PATH, new[] { LogText });
+            }
+            catch (Exception e)
+            {
+                LogText = ErrorLog(LogText, e);
+            }
+
+            return LogText;
+        }
+
+        /// <summary>
+        /// Questo metodo viene richiamato per scrivere un log di emergenza in un file diverso.
+        /// All'interno del file di log d'emergenza, che si trova nella cartella documenti dell'utente che ha
+        /// avviato MOTF, si troverà l'ultimo messaggio da scrivere più l'eccezione.
+        /// </summary>
+        /// <param name="text">Ultimo messaggio di log da scrivere</param>
+        /// <param name="e">Eccezione da loggare</param>
+        /// <returns>Testo modificato da mostrare all'utente</returns>
+        private static string ErrorLog(string text, Exception e = null)
+        {
+            string ErrorLogFile = Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt";
+
+            text += $"\n!!! Errore nella scrittura del file di log: {e.Message} !!!\n{e.StackTrace}\n";
+
             // Inserisco tutti i dati anche nel file
             // Se non esiste lo creo
-            if (!File.Exists(LOG_PATH))
+            if (!File.Exists(ErrorLogFile))
             {
-                StreamWriter streamWriter = File.CreateText(LOG_PATH);
+                StreamWriter streamWriter = File.CreateText(ErrorLogFile);
                 streamWriter.Flush();
                 streamWriter.Close();
             }
             else
-                File.AppendAllLines(LOG_PATH, new[] { LogText });
+                File.AppendAllLines(ErrorLogFile, new[] { text });
 
-            return LogText;
+            return text;
         }
 
         public static bool CheckSettingsFile() => File.Exists(USER_FOLDER + @"\config.set");

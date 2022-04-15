@@ -35,6 +35,10 @@ namespace MEDIA_ON_THE_FLY
             if (!System.IO.Directory.Exists(MOTF.TEMP_FOLDER))
                 System.IO.Directory.CreateDirectory(MOTF.TEMP_FOLDER);
 
+            // Creo una cartella in documenti
+            if (!System.IO.Directory.Exists(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY"))
+                System.IO.Directory.CreateDirectory(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY");
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new formHome());
@@ -44,8 +48,8 @@ namespace MEDIA_ON_THE_FLY
         {
             Exception ex = (Exception)e.ExceptionObject;
             Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
-            File.AppendAllLines(MOTF.USER_FOLDER + "\\log.txt", new[] { "!!! ERRORE INASPETTATO !!!\n" + ex.Message + "\n" + ex.StackTrace });
-            File.AppendAllLines(MOTF.USER_FOLDER + "\\log.txt", new[] { "!!! CINGOLI EXPRESS CHIUSO !!! \n" });
+            File.AppendAllLines(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt", new[] { "!!! ERRORE INASPETTATO !!!\n" + ex.Message + "\n" + ex.StackTrace });
+            File.AppendAllLines(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt", new[] { "!!! CINGOLI EXPRESS CHIUSO !!! \n" });
             Application.Exit();
         }
 
@@ -53,8 +57,8 @@ namespace MEDIA_ON_THE_FLY
         {
             Exception ex = e.Exception;
             Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
-            File.AppendAllLines(MOTF.USER_FOLDER + "\\log.txt", new[] { "!!! ERRORE INASPETTATO !!!\n" + ex.Message + "\n" + ex.StackTrace });
-            File.AppendAllLines(MOTF.USER_FOLDER + "\\log.txt", new[] { "!!! CINGOLI EXPRESS CHIUSO !!! \n" });
+            File.AppendAllLines(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt", new[] { "!!! ERRORE INASPETTATO !!!\n" + ex.Message + "\n" + ex.StackTrace });
+            File.AppendAllLines(System.Environment.SpecialFolder.MyDocuments + "\\MEDIA ON-THE-FLY\\error.txt", new[] { "!!! CINGOLI EXPRESS CHIUSO !!! \n" });
             Application.Exit();
         }
     }
