@@ -7,12 +7,27 @@
     <ProjectGuid>{3A075831-BAE4-41A1-AB6D-37A1CCE684B4}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>MEDIA_ON_THE_FLY</RootNamespace>
-    <AssemblyName>MEDIA_ON-THE-FLY</AssemblyName>
+    <AssemblyName>MEDIA ON-THE-FLY</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -54,11 +69,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client-server moduli\MessageData.cs" />
+    <Compile Include="Client-server moduli\StateObject.cs" />
     <Compile Include="formFileCheck.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="formFileCheck.Designer.cs">
       <DependentUpon>formFileCheck.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modalità server\formClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Modalità server\formClient.Designer.cs">
+      <DependentUpon>formClient.cs</DependentUpon>
     </Compile>
     <Compile Include="MOTF.cs" />
     <Compile Include="formHome.cs">
@@ -75,6 +98,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Modalità server\formServer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Modalità server\formServer.Designer.cs">
+      <DependentUpon>formServer.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="formFileCheck.resx">
       <DependentUpon>formFileCheck.cs</DependentUpon>
     </EmbeddedResource>
@@ -84,6 +113,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="formPlayer.resx">
       <DependentUpon>formPlayer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Modalità server\formClient.resx">
+      <DependentUpon>formClient.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -95,6 +128,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="Modalità server\formServer.resx">
+      <DependentUpon>formServer.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <None Include="app1.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -138,6 +176,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\img_64.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 e x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -9,16 +9,16 @@ namespace MEDIA_ON_THE_FLY
     internal class MOTF
     {
         // Sotto cartelle per nome PC e nome utente in uso
-        public static readonly string MACHINENAME_AND_USERNAME = $@"\{Environment.MachineName}\{Environment.UserName}";
+        public static readonly string   MACHINENAME_AND_USERNAME = $@"\{Environment.MachineName}\{Environment.UserName}";
 
         // Cartelle utili all'applicazione
-        public static readonly string MOTF_FOLDER = Application.StartupPath + @"\motf";
-        public static readonly string USER_FOLDER = MOTF_FOLDER + MACHINENAME_AND_USERNAME;
-        public static readonly string TEMP_FOLDER = USER_FOLDER + @"\tmp";
+        public static readonly string   MOTF_FOLDER = Application.StartupPath + @"\motf";
+        public static readonly string   USER_FOLDER = MOTF_FOLDER + MACHINENAME_AND_USERNAME;
+        public static readonly string   TEMP_FOLDER = USER_FOLDER + @"\tmp";
 
         // Path file utili
-        private static readonly string LOG_PATH = USER_FOLDER + @"\log.txt";
-        public static readonly string LOCK_PATH = USER_FOLDER + @"\motf.lock";
+        private static readonly string  LOG_PATH = USER_FOLDER + @"\log.txt";
+        public  static readonly string  LOCK_PATH = USER_FOLDER + @"\motf.lock";
 
         /// <summary>
         /// Questo enumeratore indica vari modi di come l'utente intende può riprodurre i video
@@ -66,6 +66,7 @@ namespace MEDIA_ON_THE_FLY
                 LogText = ErrorLog(LogText, e);
             }
 
+            LogText += "\r\n";
             return LogText;
         }
 

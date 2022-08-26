@@ -54,11 +54,20 @@ namespace MEDIA_ON_THE_FLY
             // Il counter del _monitor parte da 0 quindi tolgo 1 dalla variabile passata
             Bounds = Screen.AllScreens[monitor].Bounds;
             _monitor = monitor - 1;
-
             _volume = volume;
 
             // Imposto l'icona della finestra
             Icon = Properties.Resources.img_641;
+
+            // Imposto i filtri per il fsw
+            fswVideo.NotifyFilter = NotifyFilters.Attributes
+                                 | NotifyFilters.CreationTime
+                                 | NotifyFilters.DirectoryName
+                                 | NotifyFilters.FileName
+                                 | NotifyFilters.LastAccess
+                                 | NotifyFilters.LastWrite
+                                 | NotifyFilters.Security
+                                 | NotifyFilters.Size;
         }
 
         private void StartNewVideo(string filePath = null)
@@ -111,7 +120,6 @@ namespace MEDIA_ON_THE_FLY
             Size = new System.Drawing.Size(800, 600);   // Imposto una size stnadard
             WindowState = FormWindowState.Normal;       // Metto la finestra a normal
             FormBorderStyle = FormBorderStyle.Sizable;  // Imposto il BorderStyle
-
 
             Location = new Point(Location.X, Screen.AllScreens[_monitor].WorkingArea.Y); // Correggo la location
         }
@@ -217,7 +225,7 @@ namespace MEDIA_ON_THE_FLY
             return false;
         }
 
-        private void fswVideo_Changed(object sender, FileSystemEventArgs e)
+        private void ImportNewVideo()
         {
             // Quando lo stato del FileSystemWatcher cambia allora
             // importo un nuovo video
@@ -225,7 +233,8 @@ namespace MEDIA_ON_THE_FLY
 
             wmpMedia.Ctlcontrols.stop(); // Fermo il media player      
             wmpMedia.close(); // Chiudo la risora in uso dal wmp
-            fswVideo.Path = remoteFileDirectory;
+            fswVideo.Path = remoteFileDirectory;    // Dico al FileSystemWatcher quale cartella guardare
+            fswVideo.Filter = remoteFile.Name;      // Imposto il filtro per controllare un solo video
 
             FileInfo info = new FileInfo(localfilePath); // Prelevo informazioni riguardo al file locale
 
@@ -266,6 +275,11 @@ namespace MEDIA_ON_THE_FLY
             MOTF.Log("Inizio a riprodurlo");
             lblStatoVideo.Visible = false;
             StartNewVideo(); // Avvio il video
+        }
+
+        private void fswVideo_Changed(object sender, FileSystemEventArgs e)
+        {
+            ImportNewVideo();
         }
 
         private void formPlayer_FormClosed(object sender, FormClosedEventArgs e)

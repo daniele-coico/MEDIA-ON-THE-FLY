@@ -12,6 +12,23 @@ namespace MEDIA_ON_THE_FLY
         private readonly string _remoteFilePath;
         private readonly DriveType _lastDriveType;
 
+        private bool _fakeLoadingScreen = false;
+
+        /// <summary>
+        /// Questo costruttore consente di richiamare questa finestra cambiando i testi dei label.
+        /// Può anche essere utilizzata come finestra fantoccio per "dimostrare" che il programma sta girando (impostare fakeLoadingScreen su true).
+        /// </summary>
+        /// <param name="title">Titolo del label</param>
+        /// <param name="text">Testo della finestra</param>
+        /// <param name="fakeLoadingScreen">Quando è true, la finestra non eseguirà NESSUNA operazione</param>
+        public formFileCheck(string title, string text, bool fakeLoadingScreen = true)
+        {
+            _fakeLoadingScreen = fakeLoadingScreen;
+            lblCheck.Text = title;
+            lblTesto.Text = text;
+            InitializeComponent();
+        }
+
         public formFileCheck(string filePath, DriveType driveType)
         {
             InitializeComponent();
@@ -126,7 +143,8 @@ namespace MEDIA_ON_THE_FLY
 
         private void formFileCheck_Load(object sender, EventArgs e)
         {
-            this.BeginInvoke((MethodInvoker) this.FileCheck);
+            if (_fakeLoadingScreen == false)
+                BeginInvoke((MethodInvoker) FileCheck);
         }
     }
 }
