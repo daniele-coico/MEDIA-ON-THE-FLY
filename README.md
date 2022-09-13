@@ -8,7 +8,7 @@ Also there are some other options:
 - reproduce all files in a folder
 - run the application at Windows startup
 
-I liked the idea of the application so I made the repository public, also it's an achievement for me.
+I liked the idea of the application so I made the repository public.
 
 The project and the application are in Italian languge, maybe in the future I can translate it.
 Not planning on constantly update the repo - open to suggestions/corrections.
