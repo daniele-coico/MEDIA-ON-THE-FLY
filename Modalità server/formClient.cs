@@ -1,10 +1,8 @@
 ﻿using SetDocs;
 using System;
-using System.Collections;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -31,7 +29,7 @@ namespace MEDIA_ON_THE_FLY
         public formClient(string launchedFromPath, string IP)
         {
             this.launchedFromPath = launchedFromPath;
-            this.serverIP = IP;
+            serverIP = IP;
             InitializeComponent();
         }
 
@@ -70,11 +68,14 @@ namespace MEDIA_ON_THE_FLY
         {
             Thread receiveThread = new Thread(GestisciRicezione);
 
+            // Controllo l'IP che mi è stato passato - creo eventualmente l'IP address corretto
+            if (IPAddress.TryParse(ServerIPAddress, out IPAddress ipAddress) == false)
+                return false;
+
             // Mi collego al client
             try
             {
                 // Imposto l'EndPoint per connettermi al server
-                IPAddress ipAddress = IPAddress.Parse(ServerIPAddress);
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 20000);
 
                 // Imposto la socket e mi connetto all'EndPoint.
@@ -102,8 +103,6 @@ namespace MEDIA_ON_THE_FLY
                 return false;
             }
 
-            // Dopo essermi collegato rimango connesso fino a quando
-            // l'utente non decide di scollegarsi.
             try
             {
                 client.MessaggioDaInviare = formHome.versione.ToString();
@@ -131,11 +130,6 @@ namespace MEDIA_ON_THE_FLY
 
                     if (bytesRead > 0)
                     {
-                        // Se i dati letti sono validi allora li metto nel buffer
-                        //client.sb.Append(Encoding.UTF8.GetString(client.buffer, 0, bytesRead));
-
-                        // Se non c'ò l'EOF è possibile che mi manchino dei dati.
-                        //rawResponse = client.sb.ToString();
                         string decodedResponse;
 
                         decodedResponse = MessageData.ConvertiBufferRiceuto(client.buffer, out string username);
@@ -151,17 +145,22 @@ namespace MEDIA_ON_THE_FLY
                             case "RESTART:UPDATE":
                                 // Se MOTF gira su disco condiviso, allora riavvio questa istanza per aggiornarla.
                                 if (cboxAutoUpdate.Checked == true)
+                                {
                                     MOTF.Log($"Il server deve essere aggiornato - è necessario riavviare anche questa istanza per completare l'aggiornamento");
+                                }
                                 else
                                 {
                                     Show();
 
-                                    MOTF.Log($"Il server ha effettuato un aggiornamento - riavvio applicazione imminente...");
+                                    MOTF.Log($"Il server ha effettuato un aggiornamento - riavvio applicazione...");
                                     lblStato.Text = "Aggiornamento server - riavvio applicazione...";
                                     lblStato.ForeColor = System.Drawing.Color.Orange;
 
                                     Refresh();
                                     Thread.Sleep(5000);
+
+                                    // Se il server è stato aggiornato probabilmente c'è anche un update
+                                    formHome.CheckUpdate();
                                 }
 
                                 System.Diagnostics.Process.Start(launchedFromPath, $"-connect {tboxIP.Text}");
@@ -209,6 +208,8 @@ namespace MEDIA_ON_THE_FLY
         {
             tboxIP.Enabled = false;
             cboxAutoUpdate.Enabled = false;
+            cboxConnettiAuto.Enabled = true;
+            btnDisconnetti.Enabled = true;
             btnConnetti.Enabled = false;
             connectedToServer = true;
 
@@ -217,6 +218,7 @@ namespace MEDIA_ON_THE_FLY
 
             if (StartClient(tboxIP.Text) == false)
             {
+                MessageBox.Show("Non sono riuscito a connettermi al server, verifica la rete o l'indrizzo IP.", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 connectedToServer = false;
                 Close();
                 Dispose();
@@ -232,6 +234,33 @@ namespace MEDIA_ON_THE_FLY
                 e.Cancel = true;
                 Hide();
             }
+        }
+
+        private void cboxConnettiAuto_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cboxConnettiAuto.Checked)
+                new WriteSettings(MOTF.USER_FOLDER, "config").AddSetting("args[]", $"{launchedFromPath} -connect {tboxIP.Text}", "Argomenti per l'avvio di MOTF");
+            else
+                new WriteSettings(MOTF.USER_FOLDER, "config").RemoveSetting("args[]");
+        }
+
+        private void cboxAutoUpdate_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnDisconnetti_Click(object sender, EventArgs e)
+        {
+            client.Close();
+            connectedToServer = false;
+
+            tboxIP.Enabled = true;
+            cboxAutoUpdate.Enabled = true;
+            cboxConnettiAuto.Enabled = false;
+            btnConnetti.Enabled = true;
+
+            lblStato.Text = "Stato: disconnesso";
+            lblStato.ForeColor = System.Drawing.Color.DarkRed;
         }
     }
 }

@@ -37,6 +37,8 @@ namespace MEDIA_ON_THE_FLY
             this.cboxAutoUpdate = new System.Windows.Forms.CheckBox();
             this.lblAutoUpdate = new System.Windows.Forms.Label();
             this.lblStato = new System.Windows.Forms.Label();
+            this.cboxConnettiAuto = new System.Windows.Forms.CheckBox();
+            this.btnDisconnetti = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -71,9 +73,9 @@ namespace MEDIA_ON_THE_FLY
             // btnConnetti
             // 
             this.btnConnetti.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnConnetti.Location = new System.Drawing.Point(18, 344);
+            this.btnConnetti.Location = new System.Drawing.Point(24, 355);
             this.btnConnetti.Name = "btnConnetti";
-            this.btnConnetti.Size = new System.Drawing.Size(254, 38);
+            this.btnConnetti.Size = new System.Drawing.Size(288, 38);
             this.btnConnetti.TabIndex = 10;
             this.btnConnetti.Text = "Connetti";
             this.btnConnetti.UseVisualStyleBackColor = true;
@@ -89,6 +91,7 @@ namespace MEDIA_ON_THE_FLY
             this.cboxAutoUpdate.TabIndex = 11;
             this.cboxAutoUpdate.Text = "Consenti al server di gestire gli aggiornamenti";
             this.cboxAutoUpdate.UseVisualStyleBackColor = true;
+            this.cboxAutoUpdate.CheckedChanged += new System.EventHandler(this.cboxAutoUpdate_CheckedChanged);
             // 
             // lblAutoUpdate
             // 
@@ -107,15 +110,42 @@ namespace MEDIA_ON_THE_FLY
             this.lblStato.AutoSize = true;
             this.lblStato.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblStato.ForeColor = System.Drawing.Color.Maroon;
-            this.lblStato.Location = new System.Drawing.Point(14, 317);
+            this.lblStato.Location = new System.Drawing.Point(19, 323);
             this.lblStato.Name = "lblStato";
             this.lblStato.Size = new System.Drawing.Size(182, 24);
             this.lblStato.TabIndex = 13;
             this.lblStato.Text = "Stato: non connesso";
             // 
+            // cboxConnettiAuto
+            // 
+            this.cboxConnettiAuto.AutoSize = true;
+            this.cboxConnettiAuto.Enabled = false;
+            this.cboxConnettiAuto.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboxConnettiAuto.Location = new System.Drawing.Point(24, 399);
+            this.cboxConnettiAuto.Name = "cboxConnettiAuto";
+            this.cboxConnettiAuto.Size = new System.Drawing.Size(266, 22);
+            this.cboxConnettiAuto.TabIndex = 14;
+            this.cboxConnettiAuto.Text = "Connettiti al server all\'avvio di MOTF";
+            this.cboxConnettiAuto.UseVisualStyleBackColor = true;
+            this.cboxConnettiAuto.CheckedChanged += new System.EventHandler(this.cboxConnettiAuto_CheckedChanged);
+            // 
+            // btnDisconnetti
+            // 
+            this.btnDisconnetti.Enabled = false;
+            this.btnDisconnetti.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnDisconnetti.Location = new System.Drawing.Point(366, 355);
+            this.btnDisconnetti.Name = "btnDisconnetti";
+            this.btnDisconnetti.Size = new System.Drawing.Size(288, 38);
+            this.btnDisconnetti.TabIndex = 15;
+            this.btnDisconnetti.Text = "Disconnetti";
+            this.btnDisconnetti.UseVisualStyleBackColor = true;
+            this.btnDisconnetti.Click += new System.EventHandler(this.btnDisconnetti_Click);
+            // 
             // formClient
             // 
-            this.ClientSize = new System.Drawing.Size(670, 394);
+            this.ClientSize = new System.Drawing.Size(670, 441);
+            this.Controls.Add(this.btnDisconnetti);
+            this.Controls.Add(this.cboxConnettiAuto);
             this.Controls.Add(this.lblStato);
             this.Controls.Add(this.lblAutoUpdate);
             this.Controls.Add(this.cboxAutoUpdate);
@@ -147,6 +177,8 @@ namespace MEDIA_ON_THE_FLY
         private System.Windows.Forms.CheckBox cboxAutoUpdate;
         private System.Windows.Forms.Label lblAutoUpdate;
         private System.Windows.Forms.Label lblStato;
+        private System.Windows.Forms.CheckBox cboxConnettiAuto;
+        private System.Windows.Forms.Button btnDisconnetti;
     }
 }
 

@@ -9,16 +9,24 @@ namespace MEDIA_ON_THE_FLY
     public partial class formHome : Form
     {
         // Variabili
-        public static readonly string versione = "0.2.2";
+        public static string versione { get; private set; } = "0.2.2";
+
+        private Thread threadUpdate;        // Thread dedicato al check degli update   
 
         private MOTF.PLAY_MODE _playMode;   // Modalità con la quale l'utente riprodurrà i file
         private string _filePath;           // Path del file da controllare
         private string _driveType;          // Ultimo tipo di dispositivo utilizzato per salvare il file
         private int _volume;                // Volume per il WMP impostato dalla trackbar
 
-        private Thread threadUpdate;        // Thread dedicato al check degli update   
-
+        // VARIABILI PER DEBUG
         public static bool DEBUG { get; } = true;
+        public static bool CHECK_UPDATE
+        {
+            get
+            {
+                return !(DEBUG);
+            }
+        }
 
         public formHome()
         {
@@ -30,11 +38,12 @@ namespace MEDIA_ON_THE_FLY
             Icon = Properties.Resources.img_641;
 
             // Thread per la verifica degli aggiornamenti
-            threadUpdate = new Thread(CheckUpdate);
+            threadUpdate = new Thread(UpdateThread);
             threadUpdate.Name = "Thread update";
-            if (DEBUG == false)
+            if (CHECK_UPDATE == true)
                 threadUpdate.Start();
 
+            // Controllo se il programma è stato chiuso correttamente
             if (File.Exists(MOTF.LOCK_PATH))
                 tboxLog.Text = MOTF.Log($"L'ultima volta MEDIA ON-THE-FLY non è stato chiuso correttamente");
             else
@@ -43,17 +52,29 @@ namespace MEDIA_ON_THE_FLY
                 File.WriteAllText(MOTF.LOCK_PATH, "");
             }
 
-
             // Argomenti:
             /*
              * -connect: specificato quando ci vuole connettere ad un server in modo automatico, dopo questo argomento è necessario un IP
              * -server:  da utilizzare quando l'applicazione deve entrare subito in modalità server
+             * -version: imposta la versione su 0.0.0
              */
 
             string[] args = Environment.GetCommandLineArgs();
-            bool leaveLoop = false;
 
-            for (int i = 1; i < args.Length && leaveLoop == false; i++)
+            // Il primo richiamo del metodo ArgumentCheck() serve per controllare gli argomenti con cui è stato avviato MOTF.
+            // Se il valore restituito è false allora vuol dire che non è stato passato nessun argomento all'avvio del programma.
+            if (ArgumentCheck(args) == false && SetDocs.FileUtility.FileExists(MOTF.USER_FOLDER, "config") == true)
+            {
+                // Se non ci sono argomenti all'avvio allora controllo le impostazioni
+                string argomentiFileImpostazione = new ReadSettings(MOTF.USER_FOLDER, "config").ReadString("args[]");
+                string[] argsSplit = argomentiFileImpostazione.Split(' ');
+                ArgumentCheck(argsSplit);
+            }
+        }
+
+        private bool ArgumentCheck(string[] args)
+        {
+            for (int i = 1; i < args.Length; i++)
             {
                 string argument = args[i];
 
@@ -65,31 +86,48 @@ namespace MEDIA_ON_THE_FLY
                         {
                             formFileCheck formFileCheck = new formFileCheck("Tentativo di connessione al server", "L'applicazione è stata riavvata a causa di un aggiornamento o dal server, attendi...", true);
                             formFileCheck.Show();
-                            Application.DoEvents();
-                            
-                            // Inoltre, se il client è stato riavviato da server, devo dare il tempo di completare un
-                            // eventuale update e avvio del server stesso. Metto il thread in sleep.
-                            Thread.Sleep(60 * 1000);
-                            new formClient(args[0], args[i++]).Show();
-                            leaveLoop = true;
+
+                            AutoConnectionToServer(args, args[i++]);
                             if (threadUpdate.IsAlive)
                                 threadUpdate.Abort();
 
                             formFileCheck.Close();
                             formFileCheck.Dispose();
                         }
-                        break;
+                        return true;
                     case "-server":
-                        if (threadUpdate.IsAlive)
-                            threadUpdate.Abort();
-                        new formServer().ShowDialog();
-                        leaveLoop = true;
+                        AutoStartServerMode();
+                        return true;
+                    case "-version":
+                        if (DEBUG)
+                        {
+                            versione = "0.0.0";
+                            //CheckUpdate();
+                        }
                         break;
                     default:
                         break;
                 }
             }
 
+            return false;
+        }
+
+        private void AutoConnectionToServer(string[] args, string ip)
+        {
+            Application.DoEvents();
+
+            // Inoltre, se il client è stato riavviato da server, devo dare il tempo di completare un
+            // eventuale update e avvio del server stesso. Metto il thread in sleep.
+            Thread.Sleep(60 * 1000);
+            new formClient(args[0], ip).Show();
+        }
+
+        private void AutoStartServerMode()
+        {
+            if (threadUpdate.IsAlive)
+                threadUpdate.Abort();
+            new formServer(true).ShowDialog();
         }
 
         private void StartPlayer()
@@ -155,35 +193,42 @@ namespace MEDIA_ON_THE_FLY
             // copia sempre in locale etc. da fare
         }
 
-        private void CheckUpdate()
+        private void UpdateThread()
+        {
+            while (true)
+            {
+                CheckUpdate();
+                Thread.Sleep(300 * 1000);
+                MOTF.Log("Applicazione in esecuzione...");
+            }
+        }
+
+        public static void CheckUpdate()
         {
             // Online versione
             // https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/master_version
 
-            while (true)
+            // Ottengo la versione disponibile online
+            System.Net.WebClient webClient = new System.Net.WebClient();
+            byte[] data = webClient.DownloadData("https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/master_version");
+            string versioneOnline = System.Text.Encoding.ASCII.GetString(data).Trim();
+
+            // Se la versione attuale è diversa da quella online
+            // allora scarico quella più recente.
+            if (versione != versioneOnline)
             {
-                // Ottengo la versione disponibile online
-                System.Net.WebClient webClient = new System.Net.WebClient();
-                byte[] data = webClient.DownloadData("https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/master_version");
-                string versioneOnline = System.Text.Encoding.ASCII.GetString(data).Trim();
+                MOTF.Log($"Una versione più recente di MOTF è stata trovata ({versioneOnline}) - scarico l'updater");
 
-                // Se la versione attuale è diversa da quella online
-                // allora scarico quella più recente.
-                if (versione != versioneOnline)
-                {
-                    // Scarico l'installer e lo salvo
-                    webClient.DownloadFile("https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/Installer.exe", Application.StartupPath + @".\Installer.exe");
+                // Scarico l'installer e lo salvo
+                webClient.DownloadFile("https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/Installer.exe", Application.StartupPath + @".\Installer.exe");
 
-                    // Avvio l'installer con argomento True per avviare
-                    // l'aggiornamento automatico.
-                    System.Diagnostics.Process.Start(@".\Installer.exe", true.ToString());
-
-                    Application.Exit();
-                }
-
-                // Metto il thread in sleep per almeno 120 secondi
-                Thread.Sleep(300 * 1000);
+                // Avvio l'installer con argomento True per avviare
+                // l'aggiornamento automatico.
+                System.Diagnostics.Process.Start(Application.StartupPath + "\\Installer.exe", true.ToString());
+                Application.Exit();
+                System.Diagnostics.Process.GetCurrentProcess().Kill();
             }
+
         }
 
         private void formHome_Load(object sender, EventArgs e)
@@ -234,6 +279,11 @@ namespace MEDIA_ON_THE_FLY
         {
             File.Delete(MOTF.LOCK_PATH);
             MOTF.Log("!! MOTF chiuso !!");
+
+            // Chiudo l'applicazione
+            Application.Exit();
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+
         }
 
         #region "Componenti WinForm"
@@ -327,6 +377,7 @@ namespace MEDIA_ON_THE_FLY
         {
             // Chiudo l'applicazione
             Application.Exit();
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
         }
 
         private void btnAvvia_Click(object sender, EventArgs e)
@@ -346,8 +397,6 @@ namespace MEDIA_ON_THE_FLY
 
         private void btnConnettiAServer_Click(object sender, EventArgs e)
         {
-            string[] args = Environment.GetCommandLineArgs();
-
             if (formClient == null || formClient.IsDisposed)
             {
                 formClient = new formClient();
@@ -357,6 +406,11 @@ namespace MEDIA_ON_THE_FLY
                 formClient.Visible = true;
 
             threadUpdate.Abort();
+        }
+
+        private void tboxLog_DoubleClick(object sender, EventArgs e)
+        {
+            MessageBox.Show($"Versione {versione} - Debug: {DEBUG}");
         }
     }
 }

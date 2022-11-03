@@ -76,7 +76,7 @@ namespace MEDIA_ON_THE_FLY
                 shortBuffer[i] = buffer[i];
 
             return shortBuffer;
-        }
+        } 
 
         public static byte[] GeneraBufferDaInviare(string name, string message)
         {
@@ -156,7 +156,7 @@ namespace MEDIA_ON_THE_FLY
             }
 
             i = 0;
-            username = Encoding.UTF8.GetString(byteUsername);
+            username = Encoding.UTF8.GetString(byteUsername).Trim('\0');
 
             /*** Ottengo il messaggio ***/
             int ptrBuffer = 0x0;

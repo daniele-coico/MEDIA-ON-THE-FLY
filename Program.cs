@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace MEDIA_ON_THE_FLY
@@ -38,7 +39,7 @@ namespace MEDIA_ON_THE_FLY
             // Creo una cartella in documenti
             if (!System.IO.Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\MEDIA ON-THE-FLY"))
                 System.IO.Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\MEDIA ON-THE-FLY");
-            
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new formHome());

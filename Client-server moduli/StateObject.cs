@@ -16,6 +16,7 @@ namespace MEDIA_ON_THE_FLY
         public readonly string IPAddress = "127.0.0.1";
 
         public string username = "Default";
+        public string versione = formHome.versione;
 
         // Buffer ricezione dati.
         public byte[] buffer = new byte[MessageData.MaxBufferSize];

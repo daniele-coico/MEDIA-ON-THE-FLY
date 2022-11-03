@@ -39,6 +39,9 @@ namespace MEDIA_ON_THE_FLY
             this.tboxPorta = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.tboxLog = new System.Windows.Forms.TextBox();
+            this.cboxServer = new System.Windows.Forms.CheckBox();
+            this.btnDisconnetti = new System.Windows.Forms.Button();
+            this.linklblAggiorna = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // listboxClient
@@ -95,7 +98,7 @@ namespace MEDIA_ON_THE_FLY
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(466, 54);
+            this.label4.Location = new System.Drawing.Point(445, 54);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(75, 24);
             this.label4.TabIndex = 6;
@@ -124,16 +127,54 @@ namespace MEDIA_ON_THE_FLY
             // 
             this.tboxLog.BackColor = System.Drawing.Color.White;
             this.tboxLog.Font = new System.Drawing.Font("Consolas", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tboxLog.Location = new System.Drawing.Point(18, 270);
+            this.tboxLog.Location = new System.Drawing.Point(18, 275);
             this.tboxLog.Multiline = true;
             this.tboxLog.Name = "tboxLog";
             this.tboxLog.ReadOnly = true;
-            this.tboxLog.Size = new System.Drawing.Size(630, 417);
+            this.tboxLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.tboxLog.Size = new System.Drawing.Size(630, 412);
             this.tboxLog.TabIndex = 9;
+            // 
+            // cboxServer
+            // 
+            this.cboxServer.AutoSize = true;
+            this.cboxServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cboxServer.Location = new System.Drawing.Point(19, 724);
+            this.cboxServer.Name = "cboxServer";
+            this.cboxServer.Size = new System.Drawing.Size(242, 22);
+            this.cboxServer.TabIndex = 10;
+            this.cboxServer.Text = "Avvia modalità server con MOTF";
+            this.cboxServer.UseVisualStyleBackColor = true;
+            this.cboxServer.CheckedChanged += new System.EventHandler(this.cboxServer_CheckedChanged);
+            // 
+            // btnDisconnetti
+            // 
+            this.btnDisconnetti.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnDisconnetti.Location = new System.Drawing.Point(453, 709);
+            this.btnDisconnetti.Name = "btnDisconnetti";
+            this.btnDisconnetti.Size = new System.Drawing.Size(195, 52);
+            this.btnDisconnetti.TabIndex = 11;
+            this.btnDisconnetti.Text = "Disconnetti";
+            this.btnDisconnetti.UseVisualStyleBackColor = true;
+            this.btnDisconnetti.Click += new System.EventHandler(this.btnDisconnetti_Click);
+            // 
+            // linklblAggiorna
+            // 
+            this.linklblAggiorna.AutoSize = true;
+            this.linklblAggiorna.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linklblAggiorna.Location = new System.Drawing.Point(454, 117);
+            this.linklblAggiorna.Name = "linklblAggiorna";
+            this.linklblAggiorna.Size = new System.Drawing.Size(194, 18);
+            this.linklblAggiorna.TabIndex = 12;
+            this.linklblAggiorna.TabStop = true;
+            this.linklblAggiorna.Text = "Aggiorna i client Out Of Date";
             // 
             // formServer
             // 
-            this.ClientSize = new System.Drawing.Size(669, 699);
+            this.ClientSize = new System.Drawing.Size(669, 773);
+            this.Controls.Add(this.linklblAggiorna);
+            this.Controls.Add(this.btnDisconnetti);
+            this.Controls.Add(this.cboxServer);
             this.Controls.Add(this.tboxLog);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.tboxPorta);
@@ -151,6 +192,7 @@ namespace MEDIA_ON_THE_FLY
             this.Name = "formServer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MEDIA ON-THE-FLY";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formServer_FormClosing);
             this.Load += new System.EventHandler(this.formServer_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -168,6 +210,9 @@ namespace MEDIA_ON_THE_FLY
         private System.Windows.Forms.TextBox tboxPorta;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox tboxLog;
+        private System.Windows.Forms.CheckBox cboxServer;
+        private System.Windows.Forms.Button btnDisconnetti;
+        private System.Windows.Forms.LinkLabel linklblAggiorna;
     }
 }
 

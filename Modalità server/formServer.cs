@@ -7,6 +7,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using static System.Windows.Forms.AxHost;
 
 namespace MEDIA_ON_THE_FLY
 {
@@ -17,8 +19,10 @@ namespace MEDIA_ON_THE_FLY
         private Thread threadPing;          // Thread dedicato al ping dei client
         private Thread threadUpdate;        // Thread dedicato al check degli update   
 
+        private bool autostart = false;     // Bool per segnalare se il server è stato avviato automaticamente
+
         // Lista di StateObject che contengono le connessioni accettate
-        public static ArrayList clientsConnectedToServer = new ArrayList();
+        public static List<StateObject> clientsConnectedToServer = new List<StateObject>();
 
         // Socket principale del server.  
         public static StateObject serverSocket = new StateObject(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -32,11 +36,21 @@ namespace MEDIA_ON_THE_FLY
             Icon = Properties.Resources.img_641;
         }
 
+        public formServer(bool autostartMode)
+        {
+            InitializeComponent();
+
+            // Imposto l'icona del programma
+            Icon = Properties.Resources.img_641;
+
+            autostart = autostartMode;
+        }
+
         /// <summary>
         /// Metodo per ottenere l'IP locale del PC
         /// </summary>
         /// <returns></returns>
-        private string GetLocalIP()
+        public static string GetLocalIP()
         {
             string localIP;
             try
@@ -64,7 +78,7 @@ namespace MEDIA_ON_THE_FLY
             string[] serverVersion = formHome.versione.Split('.');
             string[] clientVersion = version.Split('.');
 
-            if (Convert.ToInt32(serverVersion[2]) > Convert.ToInt32(clientVersion[2]))
+            if (Convert.ToInt32(serverVersion[0]) > Convert.ToInt32(clientVersion[0]))
             {
                 return true;
             }
@@ -76,7 +90,7 @@ namespace MEDIA_ON_THE_FLY
                 }
                 else
                 {
-                    if (Convert.ToInt32(serverVersion[0]) > Convert.ToInt32(clientVersion[0]))
+                    if (Convert.ToInt32(serverVersion[2]) > Convert.ToInt32(clientVersion[2]))
                         return true;
                     else
                         return false;
@@ -84,6 +98,10 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
+        /// <summary>
+        /// Metodo dedicato ad accettare le connessioni in entrata.
+        /// La nuova connessione, quando viene accettata, viene subito spostata su un thread a parte.
+        /// </summary>
         private void StartListening()
         {
             // Creo un EndPoint che contiene IP e porta del server
@@ -119,6 +137,22 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
+        /// <summary>
+        /// Questo metodo aggiunge un client alla ListBox.
+        /// </summary>
+        /// <param name="state"></param>
+        private void UpdateListboxClient(StateObject state)
+        {
+            if (IsClientVersionOutOfDate(state.versione))
+                listboxClient.Items.Add($"{state.IPAddress} - {state.username} - versione {state.versione} è OUT OF DATE (doppio click per aggiornare)");
+            else
+                listboxClient.Items.Add($"{state.IPAddress} - {state.username} - versione {state.versione}");
+        }
+
+        /// <summary>
+        /// Questo metodo gestisce una connessione appena accettata.
+        /// I dati della connessione vengono impostati da qua.
+        /// </summary>
         private void GestisciConnessione()
         {
             string ultimoMessaggio, nomeUtente = String.Empty;
@@ -140,24 +174,23 @@ namespace MEDIA_ON_THE_FLY
             // Pulisco la socket temporanea
             tempClientSocket.Dispose();
 
-            // Check dei client per verificare che siano ancora connessi
-            ChiudiConnessioneClient();
-
             try
             {
-                while (state.Connected)
+                while (state != null && state.Connected)
                 {
                     int bytesLetti = state.Receive(state.buffer);
 
                     if (bytesLetti > 0)
                     {
+                        // Converto l'ultimo messaggio ricevuto
                         ultimoMessaggio = MessageData.ConvertiBufferRiceuto(state.buffer, out nomeUtente);
-                        tboxLog.Text += MOTF.Log($"{Thread.CurrentThread.Name} - PC: {nomeUtente} - MOTF versione: {ultimoMessaggio}");
+                        
+                        // Salvo i dati importanti all'interno dell'oggetto
+                        state.username = nomeUtente;
+                        state.versione = ultimoMessaggio;
 
-                        if (IsClientVersionOutOfDate(ultimoMessaggio))
-                            listboxClient.Items.Add($"{state.IPAddress} - {nomeUtente} - versione {ultimoMessaggio} OUT OF DATE (doppio click per aggiornare)");
-                        else
-                            listboxClient.Items.Add($"{state.IPAddress} - {nomeUtente} - versione {ultimoMessaggio}");
+                        tboxLog.Text += MOTF.Log($"{Thread.CurrentThread.Name} - PC: {state.username} - MOTF versione: {state.versione}");
+                        UpdateListboxClient(state);
                     }
 
                     // Pulisco il buffer
@@ -167,20 +200,36 @@ namespace MEDIA_ON_THE_FLY
             }
             catch (SocketException e)
             {
-                tboxLog.Text += MOTF.Log($"Client {Thread.CurrentThread.Name} ({nomeUtente}) errore:\n{e.Message}");
-
+                tboxLog.Text += MOTF.Log($"Client {Thread.CurrentThread.Name} ({state.username}) si è disconnesso dal server");
+                
                 // Quando viene chiusa la connessione allora rimuoviamo l'oggetto dalla lista.
                 clientsConnectedToServer.Remove(state);
+                Thread.CurrentThread.Abort();
+            }
+            catch (ObjectDisposedException e)
+            {
+                tboxLog.Text += MOTF.Log($"Il client {Thread.CurrentThread.Name} è stato disconnesso ma non rimosso:\n{e.Message}");
+                Thread.CurrentThread.Abort();
+            }
+            catch (Exception e)
+            {
+                tboxLog.Text += MOTF.Log($"ERRORE: Il client {Thread.CurrentThread.Name} è stato disconnesso forzatamente:\n{e.Message}");
+                clientsConnectedToServer.Remove(state);
+                Thread.CurrentThread.Abort();
             }
         }
 
+        /// <summary>
+        /// Questo metodo si occupa di verificare che le connessioni siano a posto.
+        /// I tunnel con i client disconnessi vengono chiuso del tutto.
+        /// </summary>
         private void ChiudiConnessioneClient()
         {
-            foreach (StateObject stateObject in clientsConnectedToServer)
+            List<StateObject> tempList = clientsConnectedToServer;  // ATTENZIONE: le liste funzionano come variabili di riferimento.
+
+            foreach (StateObject stateObject in tempList)
                 if (IsSocketConnectedAndOnline(stateObject) == false)
                 {
-                    clientsConnectedToServer.Remove(stateObject);
-                    listboxClient.Items.Remove(stateObject.IPAddress);
                     tboxLog.Text += MOTF.Log($"Il client {stateObject.IPAddress} non è più online", '*');
 
                     stateObject.Close();
@@ -188,6 +237,10 @@ namespace MEDIA_ON_THE_FLY
                 }
         }
 
+        /// <summary>
+        /// Metodo per l'invio di un messaggio a TUTTI i client connessi.
+        /// </summary>
+        /// <param name="data">Stringa di dati da inviare</param>
         private void Send(string data)
         {
             byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -202,6 +255,10 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
+        /// <summary>
+        /// Metodo per l'invio di un messaggio a TUTTI i client connessi.
+        /// </summary>
+        /// <param name="data">Byte di dati da inviare</param>
         private void Send(byte[] data)
         {
             // Invio il messaggio appena ricevuto a tutti i client
@@ -233,35 +290,46 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
+        /// <summary>
+        /// Metodo dedicato al ping periodico delle connessioni.
+        /// </summary>
         private void Ping()
         {
-            // Prima di fare un qualsiasi ping aspetto almeno 3 minuti.
-            // Questo periodo di tempo vale anche tra un ping e l'altro.
-            Thread.Sleep(180 * 1000);
-
-            int nPing = 0, nError = 0;
-            tboxLog.Text += MOTF.Log($"* PING IN CORSO - {clientsConnectedToServer.Count} CLIENT *");
-
-            if (clientsConnectedToServer.Count > 0)
+            while (true)
             {
-                foreach (StateObject item in clientsConnectedToServer)
+                // Prima di fare un qualsiasi ping aspetto almeno 30 secondi.
+                // Questo periodo di tempo vale anche tra un ping e l'altro.
+                Thread.Sleep(30 * 1000);
+
+                int nPing = 0, nError = 0;
+                tboxLog.Text += MOTF.Log($"* PING IN CORSO - {clientsConnectedToServer.Count} CLIENT *");
+
+                if (clientsConnectedToServer.Count > 0)
                 {
-                    if (IsSocketConnectedAndOnline(item) == false)
+                    foreach (StateObject item in clientsConnectedToServer)
                     {
-                        tboxLog.Text += MOTF.Log($"ERRORE CON CLIENT {item.IPAddress}", '!');
-                        nError++;
+                        if (IsSocketConnectedAndOnline(item) == false)
+                        {
+                            tboxLog.Text += MOTF.Log($"ERRORE CON CLIENT {item.IPAddress}", '!');
+                            nError++;
+                        }
+                        else
+                            nPing++;
                     }
-                    else
-                        nPing++;
+
+                    tboxLog.Text += MOTF.Log($"Client OK: {nPing} - Errore di ping: {nError}");
                 }
+                else
+                    tboxLog.Text += MOTF.Log("Nessun client connesso");
 
-                tboxLog.Text += MOTF.Log($"Client OK: {nPing} - Errore di ping: {nError}");
+                ChiudiConnessioneClient();
+
+                // Pulisco i dati della vecchia ListBox e l'aggiorno
+                listboxClient.Items.Clear();
+
+                foreach (StateObject state in clientsConnectedToServer)
+                    UpdateListboxClient(state);
             }
-            else
-                tboxLog.Text += MOTF.Log("Nessun client connesso");
-
-            ChiudiConnessioneClient();
-
         }
 
         /// <summary>
@@ -273,22 +341,28 @@ namespace MEDIA_ON_THE_FLY
         {
             // https://stackoverflow.com/questions/2661764/how-to-check-if-a-socket-is-connected-disconnected-in-c
 
-            bool isPolling = stateObject.Poll(1000, SelectMode.SelectRead);
-            bool isNotAvaiable = (stateObject.Available == 0);
+            if (stateObject != null)
+            {
+                bool isPolling = stateObject.Poll(1000, SelectMode.SelectRead);
+                bool isNotAvaiable = (stateObject.Available == 0);
 
-            // Se isPolling e isNotAvaible sono true, allora vuol dire che la connessione con la socket
-            // non è più disponibile.
-            if ((isPolling && isNotAvaiable) || stateObject.Connected == false)
-                return false;
+                // Se isPolling e isNotAvaible sono true, allora vuol dire che la connessione con la socket
+                // non è più disponibile.
+                if ((isPolling && isNotAvaiable) || stateObject.Connected == false)
+                    return false;
+                else
+                    return true;
+            }
             else
-                return true;
+            {
+                return false;
+            }
         }
 
         private void CheckUpdate()
         {
             // Online versione
             // https://raw.githubusercontent.com/daniele-coico/MEDIA-ON-THE-FLY/master/update/master_version
-
             while (true)
             {
                 // Ottengo la versione disponibile online
@@ -310,8 +384,9 @@ namespace MEDIA_ON_THE_FLY
                     // Avvio l'installer con argomento True per avviare
                     // l'aggiornamento automatico.
                     System.Diagnostics.Process.Start(@".\Installer.exe", $"{true.ToString()} -server");
-
                     Application.Exit();
+                    System.Diagnostics.Process.GetCurrentProcess().Kill();
+
                 }
 
                 // Metto il thread in sleep per almeno 5 minuti
@@ -319,10 +394,59 @@ namespace MEDIA_ON_THE_FLY
             }
         }
 
+        /// <summary>
+        /// Quando viene avviato il server vengono generati tutti i thread necessari.
+        /// </summary>
+        private void AvvioServer()
+        {
+            // Genero i thread necessari
+            threadUpdate = new Thread(CheckUpdate);
+            threadUpdate.Name = "Thread update";
+            if (formHome.CHECK_UPDATE == true)
+                threadUpdate.Start();
+
+            threadServer = new Thread(StartListening);
+            threadServer.Name = "Thread server";
+            threadServer.Start();
+
+            threadPing = new Thread(Ping);
+            threadPing.Name = "Thread ping";
+            threadPing.Start();
+
+            // Imposto le componenti grafiche
+            tboxIP.Text = GetLocalIP();
+            tboxPorta.Text = "20000";
+        }
+
+        /// <summary>
+        /// In caso di stop del server vengono chiuse tutte le connessioni in modo sicuro.
+        /// </summary>
+        private void StopServer()
+        {
+            tboxLog.Text += MOTF.Log("Disconnessione in corso...", '*');
+
+            foreach (StateObject stateObject in clientsConnectedToServer)
+            {
+                stateObject.Disconnect(true);
+                stateObject.Dispose();
+                MOTF.Log($"Socket {stateObject.username} disconnesso", ' ', false);
+            }
+
+            tboxLog.Text += MOTF.Log("Disconnessione terminata", '!', false);
+            clientsConnectedToServer.Clear();
+        }
+
         private void formServer_Load(object sender, EventArgs e)
         {
-            // Prima di procedere con la modalità server chiedo all'utente se vuole continuare.
-            DialogResult rispostaUtente = MessageBox.Show("Leggere: avviando la modalità server non sarà possibile usare le funzioni del player." +
+            DialogResult rispostaUtente;
+
+            // Verifico se la modalità server è stata avviata automaticamente
+            if (autostart)
+                AvvioServer();
+            else
+            {
+                // Prima di procedere con la modalità server chiedo all'utente se vuole continuare.
+                rispostaUtente = MessageBox.Show("Leggere: avviando la modalità server non sarà possibile usare le funzioni del player." +
                 "Il file di log mostrerà tutto ciò che succede in questa modalità.\n" +
                 "Se si chiude il server mentre ci sono dei client connessi, quest'ultimi continueranno a funzionare normalmente ma non saranno" +
                 "in grado di ricevere eventuali update o file di configurazione da riprodurre.",
@@ -330,31 +454,33 @@ namespace MEDIA_ON_THE_FLY
                 MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Information);
 
-            // In caso di risposta positiva allora continuerò normalmente, altrimenti chiudo la finestra.
-            if (rispostaUtente == DialogResult.OK)
-            {
-                // Genero i thread necessari
-                threadUpdate = new Thread(CheckUpdate);
-                threadUpdate.Name = "Thread update";
-                if (formHome.DEBUG == false)
-                    threadUpdate.Start();
-
-                // Imposto le componenti grafiche
-                tboxIP.Text = GetLocalIP();
-                tboxPorta.Text = "20000";
-
-                threadServer = new Thread(StartListening);
-                threadServer.Name = "Thread server";
-                threadServer.Start();
-
-                threadPing = new Thread(Ping);
-                threadPing.Name = "Thread ping";
-                threadPing.Start();
+                // In caso di risposta positiva allora continuerò normalmente, altrimenti chiudo la finestra.
+                if (rispostaUtente == DialogResult.OK)
+                    AvvioServer();
+                else
+                    Close();
             }
+
+        }
+
+        private void btnDisconnetti_Click(object sender, EventArgs e)
+        {
+            StopServer();
+        }
+
+        private void cboxServer_CheckedChanged(object sender, EventArgs e)
+        {
+            string[] launchedFrom = Environment.GetCommandLineArgs();
+
+            if (cboxServer.Checked)
+                new WriteSettings(MOTF.USER_FOLDER, "config").AddSetting("args[]", $"{launchedFrom[0]} -server", "Argomenti per l'avvio di MOTF");
             else
-            {
-                Close();
-            }
+                new WriteSettings(MOTF.USER_FOLDER, "config").RemoveSetting("args[]");
+        }
+
+        private void formServer_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            StopServer();
         }
     }
 }

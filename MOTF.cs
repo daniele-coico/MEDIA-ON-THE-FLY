@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using SetDocs;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -98,7 +99,7 @@ namespace MEDIA_ON_THE_FLY
             return text;
         }
 
-        public static bool CheckSettingsFile() => File.Exists(USER_FOLDER + @"\config.set");
+        public static bool CheckSettingsFile() => FileUtility.FileExists(USER_FOLDER, "config");
 
         /// <summary>
         /// Metodo per verificare l'esistenza di una chiave che consenta l'avvio automatico del programma.
