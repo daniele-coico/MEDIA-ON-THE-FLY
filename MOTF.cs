@@ -110,7 +110,7 @@ namespace MEDIA_ON_THE_FLY
             // The path to the key where Windows looks for startup applications
             RegistryKey rkApp = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
-            if (rkApp.GetValue("MOTF") == null)
+            if (rkApp.GetValue("MEDIA ON-THE-FLY") == null)
                 // The value doesn't exist, the application is not set to run at startup
                 return false;
             else
@@ -128,7 +128,7 @@ namespace MEDIA_ON_THE_FLY
 
             if (CheckStartupItem() == false)
                 // Add the value in the registry so that the application runs at startup
-                rkApp.SetValue("MOTF", filePath);
+                rkApp.SetValue("MEDIA ON-THE-FLY", filePath);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace MEDIA_ON_THE_FLY
 
             if (CheckStartupItem())
                 // Remove the value from the registry so that the application doesn't start
-                rkApp.DeleteValue("MOTF", false);
+                rkApp.DeleteValue("MEDIA ON-THE-FLY", false);
         }
 
         /// <summary>
