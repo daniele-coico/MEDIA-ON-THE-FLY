@@ -42,6 +42,7 @@ namespace MEDIA_ON_THE_FLY
             this.wmpMedia.Dock = System.Windows.Forms.DockStyle.Fill;
             this.wmpMedia.Enabled = true;
             this.wmpMedia.Location = new System.Drawing.Point(0, 0);
+            this.wmpMedia.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.wmpMedia.Name = "wmpMedia";
             this.wmpMedia.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("wmpMedia.OcxState")));
             this.wmpMedia.Size = new System.Drawing.Size(800, 600);
@@ -62,22 +63,24 @@ namespace MEDIA_ON_THE_FLY
             this.lblStatoVideo.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.lblStatoVideo.Font = new System.Drawing.Font("Consolas", 28.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblStatoVideo.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.lblStatoVideo.Location = new System.Drawing.Point(13, 13);
+            this.lblStatoVideo.Location = new System.Drawing.Point(10, 11);
+            this.lblStatoVideo.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblStatoVideo.Name = "lblStatoVideo";
-            this.lblStatoVideo.Size = new System.Drawing.Size(674, 55);
+            this.lblStatoVideo.Size = new System.Drawing.Size(545, 45);
             this.lblStatoVideo.TabIndex = 1;
             this.lblStatoVideo.Text = "Sto cambiando il video...";
             this.lblStatoVideo.Visible = false;
             // 
             // formPlayer
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 600);
             this.Controls.Add(this.lblStatoVideo);
             this.Controls.Add(this.wmpMedia);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "formPlayer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Media Player";

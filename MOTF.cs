@@ -1,56 +1,22 @@
-﻿using Microsoft.Win32;
+﻿using static MEDIA_ON_THE_FLY.Logger.Logger;
+using MEDIA_ON_THE_FLY.Settings;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MEDIA_ON_THE_FLY
 {
-    internal class MOTF
+    public class MOTF
     {
-
-        private static string LOG_PATH = Application.StartupPath + "\\log.txt";    // Director nella quale salvare il file di log
-
-        public enum PLAY_MODE
-        {
-            FILE = 0,
-            PLAYLIST = 1,
-            FOLDER = 2
-        }
-
-        /// <summary>
-        /// La funzione di Log serve a mostrare tutte le operazioni effettuate dal programma.
-        /// L'output viene anche salvato su un file di testo.
-        /// </summary>
-        /// <param name="txt">Stringa da aggiungere al Log</param>
-        /// <returns>Stirnga formattata in modo corretto</returns>
-        public static string Log(string txt,
-                         char firstChar = '>',
-                         bool orario = true)
-        {
-            string LogText = $"{firstChar} [{DateTime.Now}] {txt}"; // formatto il testo in modo corretto
-
-            if (orario == false)
-                LogText = $"{firstChar} {txt}";
-
-            // Inserisco tutti i dati anche nel file
-            // Se non esiste lo creo
-            if (!File.Exists(LOG_PATH))
-            {
-                StreamWriter streamWriter = File.CreateText(LOG_PATH);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
-            else
-                File.AppendAllLines(LOG_PATH, new[] { LogText });
-
-            return LogText;
-        }
-
-        public static bool CheckSettingsFile() => File.Exists(Application.StartupPath + "\\config.set");
+        public static Config Config;
 
         /// <summary>
         /// Metodo per verificare l'esistenza di una chiave che consenta l'avvio automatico del programma.
@@ -80,6 +46,8 @@ namespace MEDIA_ON_THE_FLY
             if (CheckStartupItem() == false)
                 // Add the value in the registry so that the application runs at startup
                 rkApp.SetValue("MOTF", filePath);
+
+            Logger.Logger.LogInfo($"Aggiunta chiave di avvio automatico per il programma [{filePath}]");
         }
 
         /// <summary>
@@ -93,6 +61,63 @@ namespace MEDIA_ON_THE_FLY
             if (CheckStartupItem())
                 // Remove the value from the registry so that the application doesn't start
                 rkApp.DeleteValue("MOTF", false);
+
+            Logger.Logger.LogInfo($"Rimossa chiave di avvio automatico per il programma");
+        }
+
+        public static void LoadSettings(string configPath)
+        {
+            if (!File.Exists(configPath))
+            {
+                LogWarning($"Non ho trovato il file di configurazione [{configPath}] - creo un file default");
+                CreateDefaultSettings(configPath);
+                return;
+            }
+
+            try
+            {
+                string plainJsonFile = File.ReadAllText(configPath);
+                var jsonObj = JsonConvert.DeserializeObject<Config>(plainJsonFile, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    DefaultValueHandling = DefaultValueHandling.Include
+                });
+
+                Config = jsonObj;
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"Il file di configurazione non è stato caricato correttamente: {ex.Message}");
+                CreateDefaultSettings(configPath);
+            }
+        }
+
+        public static void SaveSettings(string configPath)
+        {
+            string serializedObject = JsonConvert.SerializeObject(MOTF.Config, Formatting.Indented);
+            var writer = File.CreateText(configPath);
+            writer.Write(serializedObject);
+            writer.Close();
+            writer.Dispose();
+        }
+
+        public static void CreateDefaultSettings(string configPath)
+        {
+            try
+            {
+                // Crea un file di configurazione predefinito
+                Config = new Config();
+
+                string serializedObject = JsonConvert.SerializeObject(MOTF.Config, Formatting.Indented);
+                var writer = File.CreateText(configPath);
+                writer.Write(serializedObject);
+                writer.Close();
+                writer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"Il file di configurazione non è stato creato! Errore: {ex.Message}");
+            }
         }
     }
 }
